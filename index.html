@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Пасхальний збір | Великодні герої</title>
+    <style>
+        * {
+            user-select: none;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #fde8cd 0%, #ffe0b5 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, 'Comic Neue', cursive;
+            touch-action: pan-x pan-y;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 550px;
+            margin: 12px auto;
+            border-radius: 64px 64px 48px 48px;
+            background: rgba(255, 245, 225, 0.7);
+            box-shadow: 0 20px 35px rgba(200, 120, 50, 0.3);
+            backdrop-filter: blur(4px);
+            padding: 16px 10px 20px 10px;
+        }
+
+        .character-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            background: #fff6e8;
+            border-radius: 60px;
+            padding: 20px 12px 30px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .title {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #d2694b;
+            text-shadow: 3px 3px 0 #ffd966;
+            margin-bottom: 12px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .sub {
+            font-size: 1rem;
+            background: #f7bc6d;
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 60px;
+            color: #442200;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 18px;
+            width: 100%;
+            justify-items: center;
+            margin: 15px 0;
+        }
+
+        .char-card {
+            background: #fff0dd;
+            border-radius: 48px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 110px;
+            border: 2px solid #ffbf80;
+        }
+        .char-card:active { transform: scale(0.96);}
+        .char-card.selected {
+            background: #ffdd99;
+            border: 4px solid #f0a500;
+            box-shadow: 0 0 0 3px #ffdd99, 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .char-img {
+            width: 70px;
+            height: 70px;
+            background: #ffe3b5;
+            border-radius: 100px;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .char-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .char-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #7b3f00;
+        }
+        .char-ability {
+            font-size: 0.7rem;
+            background: #ffe0b5;
+            border-radius: 40px;
+            padding: 3px 6px;
+            margin-top: 6px;
+            color: #a55217;
+        }
+        .start-btn {
+            background: #ffaa44;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 12px 35px;
+            border-radius: 100px;
+            margin-top: 20px;
+            color: #472100;
+            box-shadow: 0 7px 0 #b4621a;
+            transition: 0.07s linear;
+            cursor: pointer;
+        }
+        .start-btn:active { transform: translateY(3px); box-shadow: 0 4px 0 #b4621a;}
+
+        .game-ui {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background: #ffe3bfcc;
+            backdrop-filter: blur(8px);
+            border-radius: 80px;
+            padding: 10px 20px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            font-size: 1.4rem;
+            color: #5a2e0e;
+        }
+        .stat {
+            background: #fff0cf;
+            border-radius: 60px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .restart {
+            background: #cc8b4b;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 6px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #6a3e1a;
+            transition: 0.05s linear;
+        }
+        .restart:active { transform: translateY(2px); box-shadow: none;}
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: radial-gradient(circle at 20% 30%, #b7dc9c, #92b86b);
+            border-radius: 48px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .controls-note {
+            font-size: 0.8rem;
+            background: #ffefcf;
+            margin-top: 12px;
+            padding: 6px 12px;
+            border-radius: 60px;
+            color: #8b5a2b;
+        }
+        @media (max-width: 550px) {
+            .char-img { width: 55px; height: 55px;}
+            .stats { font-size: 1.1rem; padding: 5px 12px;}
+            .stat { padding: 3px 10px;}
+            .title { font-size: 1.8rem;}
+        }
+    </style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+    <div id="characterScreen" class="character-screen">
+        <div class="title">🐣 ПАСХАЛЬНИЙ ЗБІР 🥚</div>
+        <div class="sub">обери свого героя (зображення з папки)</div>
+        <div class="char-grid" id="charGrid"></div>
+        <button id="startGameBtn" class="start-btn">🌷 ПОЧАТИ ГРУ 🌼</button>
+    </div>
+
+    <div id="gameUI" class="game-ui">
+        <div class="stats">
+            <div class="stat">🥚 ОЧКИ: <span id="scoreValue">0</span></div>
+            <div class="stat">❤️ ЖИТТЯ: <span id="healthValue">3</span></div>
+            <button id="restartBtn" class="restart">🔄 RESTART</button>
+        </div>
+        <canvas id="gameCanvas" width="500" height="600"></canvas>
+        <div class="controls-note">
+            📱 Свайп / миша | 💻 WASD або рух миші
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ПЕРСОНАЖІ ТІЛЬКИ З ФАЙЛАМИ: Tito.png, Smartik.png, Junior.png, Fil.png, Milka.png, Bark.png
+        // ЖОДНИХ ТЕКСТОВИХ ЗАМІННИКІВ, НІЯКИХ ЕМОДЗІ-ЗАГЛУШОК
+        const characters = [
+            { id: "Tito",  name: "Tito",  displayName: "Яйціто",  ability: "Спіймай +2 очка за яйце", bonus: 2, special: "doublePoints", imgFile: "Tito.png" },
+            { id: "Smartik", name: "Smartik", displayName: "Паскмартик", ability: "Яйця падають повільніше", special: "slowEggs", imgFile: "Smartik.png" },
+            { id: "Junior", name: "Junior", displayName: "Ковбасуніор", ability: "Швидший збір (+швидкість гравця)", special: "fastMove", imgFile: "Junior.png" },
+            { id: "Fil", name: "Fil", displayName: "Хрінфіл", ability: "Початкове життя +1", special: "extraLife", imgFile: "Fil.png" },
+            { id: "Milka", name: "Milka", displayName: "Салмілка", ability: "Золоті яйця +5 очок", special: "goldenBoost", imgFile: "Milka.png" },
+            { id: "Bark", name: "Bark", displayName: "Холобарк", ability: "Збирає два яйця разом", special: "doubleCollect", imgFile: "Bark.png" }
+        ];
+
+        let currentCharacter = null;
+        let gameActive = false;
+        let animationId = null;
+        let canvas, ctx;
+        let gameWidth = 500, gameHeight = 600;
+
+        let score = 0;
+        let health = 3;
+        let player = { x: gameWidth/2, y: gameHeight - 70, radius: 22 };
+        let eggs = [];
+        let frameCounter = 0;
+        let eggSpawnDelay = 35;
+        let baseEggSpeed = 2.2;
+        let doublePointsFlag = false;
+        let slowEggsFlag = false;
+        let fastMoveFlag = false;
+        let goldenBoostFlag = false;
+        let doubleCollectFlag = false;
+        let extraLifeGiven = false;
+
+        let mouseX = player.x;
+        let targetX = player.x;
+        let keys = { a: false, d: false };
+        let playerImage = null;
+
+        // Завантаження справжньої картинки з файлу, без підміни на текст/емодзі
+        function loadRealImage(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    // Якщо картинка не завантажилась — повертаємо null, але НЕ створюємо текстову заглушку
+                    // У грі буде намальований стандартний стилізований персонаж (без емодзі/літер)
+                    resolve(null);
+                };
+                img.src = src;
+            });
+        }
+
+        async function preloadHeroImages() {
+            for(let ch of characters) {
+                await loadRealImage(ch.imgFile);
+            }
+        }
+
+        function initCharactersUI() {
+            const grid = document.getElementById('charGrid');
+            grid.innerHTML = '';
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'char-card';
+                card.dataset.id = char.id;
+                // Відображаємо реальне фото з файлу, без текстових заглушок
+                card.innerHTML = `
+                    <div class="char-img"><img src="${char.imgFile}" alt="${char.displayName}"></div>
+                    <div class="char-name">${char.displayName}</div>
+                    <div class="char-ability">${char.ability}</div>
+                `;
+                card.addEventListener('click', async () => {
+                    document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    currentCharacter = char;
+                    // Завантажуємо реальне зображення для гравця
+                    const img = await loadRealImage(char.imgFile);
+                    if(img) {
+                        playerImage = img;
+                    } else {
+                        playerImage = null;
+                    }
+                });
+                grid.appendChild(card);
+            });
+            const firstCard = document.querySelector('.char-card');
+            if(firstCard) {
+                firstCard.classList.add('selected');
+                currentCharacter = characters[0];
+                loadRealImage(characters[0].imgFile).then(img => {
+                    if(img) playerImage = img;
+                    else playerImage = null;
+                });
+            }
+        }
+
+        function applyCharacterBonuses() {
+            if(!currentCharacter) return;
+            doublePointsFlag = (currentCharacter.special === 'doublePoints');
+            slowEggsFlag = (currentCharacter.special === 'slowEggs');
+            fastMoveFlag = (currentCharacter.special === 'fastMove');
+            goldenBoostFlag = (currentCharacter.special === 'goldenBoost');
+            doubleCollectFlag = (currentCharacter.special === 'doubleCollect');
+            if(currentCharacter.special === 'extraLife' && !extraLifeGiven) {
+                health += 1;
+                extraLifeGiven = true;
+                document.getElementById('healthValue').innerText = health;
+            }
+            if(slowEggsFlag) baseEggSpeed = 1.5;
+            else baseEggSpeed = 2.2;
+            if(fastMoveFlag) player.radius = 26;
+            else player.radius = 22;
+        }
+
+        function startGame() {
+            if(!currentCharacter) {
+                alert("Оберіть пасхального героя!");
+                return;
+            }
+            score = 0;
+            health = 3;
+            extraLifeGiven = false;
+            eggs = [];
+            frameCounter = 0;
+            eggSpawnDelay = 35;
+            targetX = gameWidth/2;
+            mouseX = gameWidth/2;
+            player.x = gameWidth/2;
+            applyCharacterBonuses();
+            if(currentCharacter.special === 'extraLife') {
+                health = 4;
+                extraLifeGiven = true;
+            } else {
+                if(health !== 3) health = 3;
+            }
+            document.getElementById('scoreValue').innerText = score;
+            document.getElementById('healthValue').innerText = health;
+            document.getElementById('characterScreen').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'flex';
+            gameActive = true;
+            if(animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function restartGame() {
+            if(animationId) cancelAnimationFrame(animationId);
+            gameActive = false;
+            document.getElementById('characterScreen').style.display = 'flex';
+            document.getElementById('gameUI').style.display = 'none';
+            currentCharacter = null;
+            extraLifeGiven = false;
+            eggs = [];
+            score = 0;
+            health = 3;
+            if(animationId) cancelAnimationFrame(animationId);
+        }
+
+        function spawnEgg() {
+            let isGolden = false;
+            if(goldenBoostFlag && Math.random() < 0.12) isGolden = true;
+            else if(Math.random() < 0.07) isGolden = true;
+            let value = isGolden ? 5 : 1;
+            if(doublePointsFlag && !isGolden) value = 2;
+            const radius = isGolden ? 14 : 12;
+            eggs.push({
+                x: 20 + Math.random() * (gameWidth - 40),
+                y: -radius,
+                radius: radius,
+                value: value,
+                isGolden: isGolden,
+                speed: baseEggSpeed + (Math.random() * 0.8)
+            });
+        }
+
+        function updateEggs() {
+            for(let i=0; i<eggs.length; i++) eggs[i].y += eggs[i].speed;
+            let lostLife = false;
+            eggs = eggs.filter(e => {
+                if(e.y + e.radius > gameHeight + 30) {
+                    lostLife = true;
+                    return false;
+                }
+                return e.y + e.radius >= -50;
+            });
+            if(lostLife && gameActive) {
+                health--;
+                document.getElementById('healthValue').innerText = health;
+                if(health <= 0) gameOver();
+            }
+        }
+
+        function collectEggs() {
+            for(let i=0; i<eggs.length; i++) {
+                const e = eggs[i];
+                const dx = player.x - e.x;
+                const dy = player.y - e.y;
+                if(Math.hypot(dx, dy) < player.radius + e.radius) {
+                    let addScore = e.value;
+                    if(doubleCollectFlag) addScore = e.value * 2;
+                    score += addScore;
+                    eggs.splice(i,1);
+                    i--;
+                }
+            }
+            document.getElementById('scoreValue').innerText = score;
+        }
+
+        function gameOver() {
+            gameActive = false;
+            cancelAnimationFrame(animationId);
+            alert(`🎉 Гра завершена! 🥚 Ваш результат: ${score} очок. Натисніть RESTART.`);
+            restartGame();
+        }
+
+        function updatePlayerPosition() {
+            if(!gameActive) return;
+            let move = 0;
+            const speed = fastMoveFlag ? 8.6 : 6.2;
+            if(keys.d) move += 1;
+            if(keys.a) move -= 1;
+            if(move !== 0) targetX += move * speed;
+            else targetX = mouseX;
+            targetX = Math.min(Math.max(targetX, 20 + player.radius), gameWidth - 20 - player.radius);
+            player.x += (targetX - player.x) * 0.32;
+            player.x = Math.min(Math.max(player.x, 15 + player.radius), gameWidth - 15 - player.radius);
+        }
+
+        function draw() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, gameWidth, gameHeight);
+            ctx.fillStyle = "#aad576";
+            ctx.fillRect(0, 0, gameWidth, gameHeight);
+            for(let i=0;i<20;i++) {
+                ctx.fillStyle = "#87b33c";
+                ctx.beginPath();
+                ctx.moveTo(i*40, gameHeight-40);
+                ctx.lineTo(i*40+15, gameHeight-70);
+                ctx.lineTo(i*40-15, gameHeight-70);
+                ctx.fill();
+            }
+            for(let f=0;f<12;f++) {
+                ctx.fillStyle = ["#ffb7b2","#ffd966","#f4c2c2","#c0e0b0"][f%4];
+                ctx.beginPath();
+                ctx.arc(35+(f*47)%gameWidth, gameHeight-25 + Math.sin(f)*5, 6, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#efb87e";
+                ctx.beginPath();
+                ctx.arc(35+(f*47)%gameWidth, gameHeight-28 + Math.sin(f)*5, 3, 0, Math.PI*2);
+                ctx.fill();
+            }
+            for(let e of eggs) {
+                if(e.isGolden) {
+                    ctx.fillStyle = "#FFD966";
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = "#ffbf00";
+                } else {
+                    ctx.fillStyle = "#FFB347";
+                    ctx.shadowBlur = 6;
+                    ctx.shadowColor = "#e0a878";
+                }
+                ctx.beginPath();
+                ctx.ellipse(e.x, e.y, e.radius, e.radius*1.2, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = e.isGolden ? "#ffaa33" : "#f2851c";
+                ctx.beginPath();
+                ctx.ellipse(e.x-2, e.y-2, 2, 3, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#ffffffcc";
+                ctx.beginPath();
+                ctx.ellipse(e.x+1, e.y-3, 1.5, 2, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.strokeStyle = "#d45a1a";
+                ctx.lineWidth = 1.2;
+                ctx.moveTo(e.x-3, e.y-1);
+                ctx.lineTo(e.x+3, e.y-1);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = "#e8c38b";
+            ctx.beginPath();
+            ctx.ellipse(player.x, player.y, player.radius, player.radius*0.9, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // МАЛЮЄМО РЕАЛЬНЕ ЗОБРАЖЕННЯ ГЕРОЯ З ФАЙЛУ, БЕЗ ТЕКСТУ/ЕМОДЗІ
+            if(playerImage && playerImage.complete && playerImage.naturalWidth > 0 && playerImage.naturalHeight > 0) {
+                try {
+                    ctx.save();
+                    ctx.shadowBlur = 0;
+                    ctx.drawImage(playerImage, player.x-20, player.y-24, 40, 40);
+                    ctx.restore();
+                } catch(e) {}
+            } else {
+                // Якщо зображення відсутнє або не завантажилось — малюємо стилізованого зайчика/персонажа,
+                // але БЕЗ ЖОДНИХ ЛІТЕР ТА ЕМОДЗІ (чисте малювання)
+                ctx.fillStyle = "#bf7f40";
+                ctx.beginPath();
+                ctx.ellipse(player.x-5, player.y-4, 6, 7, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#2e1b0e";
+                ctx.beginPath();
+                ctx.ellipse(player.x+2, player.y-3, 5, 6, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(player.x-8, player.y-8, 3.5, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#3b250a";
+                ctx.beginPath();
+                ctx.arc(player.x-9, player.y-9, 1.5, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(player.x, player.y-8, 3.5, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#3b250a";
+                ctx.beginPath();
+                ctx.arc(player.x-1, player.y-9, 1.5, 0, Math.PI*2);
+                ctx.fill();
+                // носик
+                ctx.fillStyle = "#e07a2c";
+                ctx.beginPath();
+                ctx.ellipse(player.x-4, player.y-3, 2, 2.5, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+            // вушка або пасхальний капелюшок (декорація)
+            ctx.fillStyle = "#f7bc45";
+            ctx.beginPath();
+            ctx.moveTo(player.x-12, player.y+2);
+            ctx.lineTo(player.x, player.y+14);
+            ctx.lineTo(player.x+12, player.y+2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.font = "bold 12px 'Quicksand'";
+            ctx.fillStyle = "#3c280f";
+            let abilityText = currentCharacter ? currentCharacter.ability.substring(0,16) : "Збери яйця";
+            ctx.fillText(`✨ ${abilityText}`, 12, 40);
+        }
+
+        function increaseDifficulty() {
+            if(frameCounter % 450 === 0 && eggSpawnDelay > 18) eggSpawnDelay = Math.max(18, eggSpawnDelay-2);
+            if(frameCounter % 700 === 0 && baseEggSpeed < 4.0 && !slowEggsFlag) baseEggSpeed += 0.2;
+            else if(slowEggsFlag && frameCounter % 800 === 0 && baseEggSpeed < 2.8) baseEggSpeed += 0.1;
+        }
+
+        function gameLoop() {
+            if(!gameActive) return;
+            updatePlayerPosition();
+            frameCounter++;
+            if(frameCounter % Math.max(18, eggSpawnDelay) === 0) {
+                spawnEgg();
+                if(Math.random()<0.2 && frameCounter>100) spawnEgg();
+            }
+            updateEggs();
+            collectEggs();
+            increaseDifficulty();
+            draw();
+            if(health <= 0 && gameActive) gameOver();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function handleMouseMove(e) {
+            if(!gameActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let canvasX = (clientX - rect.left) * scaleX;
+            canvasX = Math.min(Math.max(canvasX, 10), gameWidth-10);
+            mouseX = canvasX;
+            targetX = mouseX;
+            if(e.touches) e.preventDefault();
+        }
+
+        function initControls() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+            canvas.addEventListener('mousemove', (e) => { if(gameActive) handleMouseMove(e); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(gameActive) handleMouseMove(e); }, { passive: false });
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(gameActive) handleMouseMove(e); });
+            window.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if(key === 'a' || key === 'arrowleft') keys.a = true;
+                if(key === 'd' || key === 'arrowright') keys.d = true;
+                if(key === 'w' || key === 'arrowup') keys.w = true;
+                if(key === 's' || key === 'arrowdown') keys.s = true;
+                e.preventDefault();
+            });
+            window.addEventListener('keyup', (e) => {
+                const key = e.key.toLowerCase();
+                if(key === 'a' || key === 'arrowleft') keys.a = false;
+                if(key === 'd' || key === 'arrowright') keys.d = false;
+                if(key === 'w' || key === 'arrowup') keys.w = false;
+                if(key === 's' || key === 'arrowdown') keys.s = false;
+            });
+        }
+
+        function resizeCanvasDisplay() {
+            if(canvas) {
+                const maxWidth = Math.min(500, window.innerWidth - 40);
+                canvas.style.width = `${maxWidth}px`;
+                canvas.style.height = 'auto';
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            await preloadHeroImages();
+            initCharactersUI();
+            initControls();
+            resizeCanvasDisplay();
+            window.addEventListener('resize', resizeCanvasDisplay);
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            document.getElementById('restartBtn').addEventListener('click', () => {
+                if(gameActive) {
+                    gameActive = false;
+                    if(animationId) cancelAnimationFrame(animationId);
+                }
+                restartGame();
+            });
+        });
+    })();
+</script>
+</body>
+</html>
