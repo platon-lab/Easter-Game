@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Easter Pets: Egg Hunt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        
+        /* Easter Animated Gradient Background */
+        #bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1);
+            background-size: 600% 600%;
+            animation: gradientBG 20s ease infinite;
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease; z-index: 10; padding: 20px; text-align: center;
+        }
+        .hidden { opacity: 0; pointer-events: none; z-index: -1; }
+
+        h1 { font-size: 3rem; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.8); margin-bottom: 20px; }
+        h2 { font-size: 2rem; color: #fff; margin-bottom: 10px; }
+        p { color: #fff; font-size: 1.1rem; margin-bottom: 20px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Character Grid */
+        .char-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 800px;
+        }
+        @media (max-width: 600px) { .char-grid { grid-template-columns: repeat(2, 1fr); } h1 { font-size: 2rem; } }
+        
+        .char-card {
+            padding: 15px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden;
+        }
+        .char-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.4); }
+        .char-img { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        .char-name { font-weight: 900; color: #333; font-size: 1.2rem; }
+        .char-desc { font-size: 0.8rem; color: #555; margin-top: 5px; height: 30px; }
+        .char-stats { font-size: 0.75rem; color: #222; margin-top: 5px; background: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 10px; width: 100%; }
+
+        /* UI Overlays */
+        #game-ui { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; }
+        .stat-box { padding: 10px 20px; font-weight: bold; color: #333; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+        
+        /* Joystick */
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; z-index: 5; touch-action: none; display: none; }
+        #joystick-base { width: 100%; height: 100%; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        #joystick-knob { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 5px 15px rgba(0,0,0,0.2); position: absolute; }
+
+        @media (hover: none) and (pointer: coarse) { #joystick-zone { display: block; } } /* Show only on touch */
+
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+
+        button {
+            padding: 15px 30px; font-size: 1.2rem; font-weight: bold; color: white; background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; color: #d33250;
+        }
+        button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 154, 158, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div id="bg"></div>
+
+    <div id="menu-screen" class="screen glass" style="border-radius: 0; background: rgba(255,255,255,0.1);">
+        <h1>🐰 ПАСХАЛЬНИЙ ЗБІР 🐣</h1>
+        <p>Обери свого героя! Уникай отруйних колючок, збирай писанки.</p>
+        <div class="char-grid" id="char-container"></div>
+    </div>
+
+    <div id="game-ui" class="hidden">
+        <div class="stat-box glass">⭐ Очки: <span id="scoreVal">0</span></div>
+        <div class="stat-box glass">❤️ Життя: <span id="livesVal">3</span></div>
+    </div>
+
+    <div id="joystick-zone" class="hidden">
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="screen glass hidden" style="border-radius: 0; background: rgba(255,255,255,0.2);">
+        <h1>ГРА ЗАКІНЧЕНА!</h1>
+        <p>Твій результат: <span id="final-score" style="font-size: 2rem; color: #ff6b6b;">0</span></p>
+        <button onclick="resetToMenu()">Грати знову</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+// --- GAME DATA & CONFIG ---
+const CHARACTERS = {
+    'Яйціто': { img: 'Tito.png', speed: 5, lives: 3, magnet: 60, multiplier: 1, color: '#ffb347', desc: 'Збалансований пес', skill: 'Стандарт' },
+    'Паскмартик': { img: 'Smartik.png', speed: 8.5, lives: 2, magnet: 60, multiplier: 1, color: '#f5d742', desc: 'Дуже швидкий', skill: 'Швидкість++' },
+    'Ковбасуніор': { img: 'Junior.png', speed: 5, lives: 3, magnet: 60, multiplier: 1, color: '#b19cd9', desc: 'Містичний сфінкс', skill: 'Щит кожні 12с' },
+    'Хрінфіл': { img: 'Fil.png', speed: 4.5, lives: 3, magnet: 60, multiplier: 2, color: '#a1c4fd', desc: 'Пухнастий шпіц', skill: 'Х2 Очки за Золоті' },
+    'Салмілка': { img: 'Milka.png', speed: 4.5, lives: 3, magnet: 180, multiplier: 1, color: '#ff9a9e', desc: 'Триколірна кішка', skill: 'Магніт яєць' },
+    'Холобарк': { img: 'Bark.png', speed: 3.2, lives: 5, magnet: 60, multiplier: 1, color: '#96e6a1', desc: 'Міцний бульдог', skill: '5 Життів (Танк)' }
+};
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+// State
+let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+let player = null;
+let eggs = [];
+let enemies = [];
+let particles = [];
+let score = 0;
+let keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+let joyVector = { x: 0, y: 0 };
+let lastTime = 0;
+let spawnTimer = 0;
+let enemySpawnTimer = 0;
+let baseEnemySpeed = 2;
+
+// --- INITIALIZATION ---
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const loadedImages = {};
+function preloadImages() {
+    for (let name in CHARACTERS) {
+        const img = new Image();
+        img.src = CHARACTERS[name].img;
+        loadedImages[name] = img;
+    }
+}
+preloadImages();
+
+function initMenu() {
+    const container = document.getElementById('char-container');
+    container.innerHTML = '';
+    for (let name in CHARACTERS) {
+        const c = CHARACTERS[name];
+        const card = document.createElement('div');
+        card.className = 'char-card glass';
+        card.innerHTML = `
+            <div class="char-img" style="box-shadow: 0 0 20px ${c.color}; overflow: hidden;">
+                <img src="${c.img}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="char-name">${name}</div>
+            <div class="char-desc">${c.desc}</div>
+            <div class="char-stats">Швидкість: ${c.speed} | Життя: ${c.lives}<br><b>Навичка: ${c.skill}</b></div>
+        `;
+        card.onclick = () => startGame(name);
+        container.appendChild(card);
+    }
+}
+initMenu();
+
+// --- INPUT HANDLING ---
+window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+// Joystick logic
+const jZone = document.getElementById('joystick-zone');
+const jBase = document.getElementById('joystick-base');
+const jKnob = document.getElementById('joystick-knob');
+let jActive = false;
+
+jZone.addEventListener('touchstart', handleJoyStart, {passive: false});
+jZone.addEventListener('touchmove', handleJoyMove, {passive: false});
+jZone.addEventListener('touchend', handleJoyEnd);
+
+function handleJoyStart(e) {
+    e.preventDefault();
+    jActive = true;
+    updateJoy(e.touches[0]);
+}
+function handleJoyMove(e) {
+    e.preventDefault();
+    if(jActive) updateJoy(e.touches[0]);
+}
+function handleJoyEnd(e) {
+    e.preventDefault();
+    jActive = false;
+    jKnob.style.transform = `translate(0px, 0px)`;
+    joyVector = { x: 0, y: 0 };
+}
+function updateJoy(touch) {
+    const rect = jBase.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    let dx = touch.clientX - centerX;
+    let dy = touch.clientY - centerY;
+    const maxDist = rect.width / 2 - 25;
+    const dist = Math.hypot(dx, dy);
+    
+    if (dist > maxDist) {
+        dx = (dx / dist) * maxDist;
+        dy = (dy / dist) * maxDist;
+    }
+    jKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    joyVector.x = dx / maxDist;
+    joyVector.y = dy / maxDist;
+}
+
+// --- CLASSES ---
+class Player {
+    constructor(name, config) {
+        this.name = name;
+        this.r = 25;
+        this.x = width / 2;
+        this.y = height / 2;
+        this.speed = config.speed;
+        this.maxLives = config.lives;
+        this.lives = config.lives;
+        this.magnet = config.magnet;
+        this.multiplier = config.multiplier;
+        this.color = config.color;
+        this.emoji = config.emoji;
+        
+        this.vx = 0;
+        this.vy = 0;
+        this.invulnerable = 0;
+        
+        // Junior's shield
+        this.shieldTimer = 0;
+        this.hasShield = (name === 'Junior'); 
+    }
+
+    update(dt) {
+        // Movement PC
+        let ax = 0, ay = 0;
+        if (keys.w || keys.ArrowUp) ay -= 1;
+        if (keys.s || keys.ArrowDown) ay += 1;
+        if (keys.a || keys.ArrowLeft) ax -= 1;
+        if (keys.d || keys.ArrowRight) ax += 1;
+
+        // Normalize PC
+        if (ax !== 0 || ay !== 0) {
+            const len = Math.hypot(ax, ay);
+            this.vx = (ax / len) * this.speed;
+            this.vy = (ay / len) * this.speed;
+        } else if (joyVector.x !== 0 || joyVector.y !== 0) {
+            // Movement Mobile
+            this.vx = joyVector.x * this.speed;
+            this.vy = joyVector.y * this.speed;
+        } else {
+            this.vx *= 0.8; // friction
+            this.vy *= 0.8;
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounds
+        this.x = Math.max(this.r, Math.min(width - this.r, this.x));
+        this.y = Math.max(this.r, Math.min(height - this.r, this.y));
+
+        if (this.invulnerable > 0) this.invulnerable -= dt;
+
+        // Junior Shield Logic
+        if (this.name === 'Junior' && !this.hasShield) {
+            this.shieldTimer += dt;
+            if (this.shieldTimer > 12000) {
+                this.hasShield = true;
+                this.shieldTimer = 0;
+                createParticles(this.x, this.y, '#b19cd9', 15);
+            }
+        }
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        
+        // Effects (Invulnerable / Shield)
+        if (this.invulnerable > 0 && Math.floor(Date.now() / 100) % 2 === 0) {
+            ctx.globalAlpha = 0.5;
+        }
+        
+        if (this.hasShield) {
+            ctx.beginPath();
+            ctx.arc(0, 0, this.r + 10, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(177, 156, 217, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#b19cd9';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // Magnet Aura for Milka
+        if (this.name === 'Milka') {
+            ctx.beginPath();
+            ctx.arc(0, 0, this.magnet, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 154, 158, 0.05)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 154, 158, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.beginPath();
+        }
+
+        // Draw character
+        ctx.beginPath();
+        ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = this.color;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.save();
+ctx.beginPath();
+ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+ctx.clip(); // Обрізаємо картинку по колу
+
+const img = loadedImages[this.name];
+if (img && img.complete) {
+    ctx.drawImage(img, -this.r, -this.r, this.r * 2, this.r * 2);
+} else {
+    // Резервний варіант, якщо фото не завантажилось
+    ctx.fillStyle = this.color;
+    ctx.fill();
+}
+ctx.restore();
+
+// Малюємо обводку поверх
+ctx.beginPath();
+ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+ctx.lineWidth = 4;
+ctx.strokeStyle = this.color;
+ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+class Egg {
+    constructor() {
+        this.r = 15;
+        this.x = Math.random() * (width - 60) + 30;
+        this.y = Math.random() * (height - 60) + 30;
+        this.type = Math.random() < 0.15 ? 'GOLD' : 'NORMAL';
+        this.timer = 8000; // Lives for 8 seconds
+        this.wobble = Math.random() * Math.PI * 2;
+        
+        const colors = ['#ff9a9e', '#a1c4fd', '#d4fc79', '#fecfef'];
+        this.color = this.type === 'GOLD' ? '#ffd700' : colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    update(dt, player) {
+        this.timer -= dt;
+        this.wobble += 0.1;
+
+        // Magnet effect
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        
+        if (dist < player.magnet) {
+            this.x += (dx / dist) * 4;
+            this.y += (dy / dist) * 4;
+        }
+
+        return this.timer <= 0; // Return true if should despawn
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y + Math.sin(this.wobble) * 3);
+        
+        if (this.timer < 2000 && Math.floor(Date.now() / 150) % 2 === 0) ctx.globalAlpha = 0.5;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.r, this.r * 1.3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = this.type === 'GOLD' ? 20 : 10;
+        ctx.fill();
+        
+        // Pattern
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-this.r+2, 0);
+        ctx.lineTo(this.r-2, 0);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+class Enemy {
+    constructor(speedMult) {
+        this.r = 18;
+        // Spawn edges
+        if (Math.random() < 0.5) {
+            this.x = Math.random() < 0.5 ? -30 : width + 30;
+            this.y = Math.random() * height;
+        } else {
+            this.x = Math.random() * width;
+            this.y = Math.random() < 0.5 ? -30 : height + 30;
+        }
+        
+        let angle = Math.atan2(height/2 - this.y, width/2 - this.x) + (Math.random()-0.5);
+        let s = (Math.random() * 2 + baseEnemySpeed) * speedMult;
+        this.vx = Math.cos(angle) * s;
+        this.vy = Math.sin(angle) * s;
+        this.rot = 0;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rot += 0.05;
+
+        // Bounce
+        if (this.x < this.r || this.x > width - this.r) this.vx *= -1;
+        if (this.y < this.r || this.y > height - this.r) this.vy *= -1;
+        
+        this.x = Math.max(this.r, Math.min(width - this.r, this.x));
+        this.y = Math.max(this.r, Math.min(height - this.r, this.y));
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rot);
+        
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            ctx.lineTo(Math.cos(i * Math.PI / 4) * this.r, Math.sin(i * Math.PI / 4) * this.r);
+            ctx.lineTo(Math.cos(i * Math.PI / 4 + Math.PI/8) * (this.r/2), Math.sin(i * Math.PI / 4 + Math.PI/8) * (this.r/2));
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#333';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        
+        ctx.fillStyle = '#ff4757';
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        let angle = Math.random() * Math.PI * 2;
+        let s = Math.random() * 4 + 1;
+        this.vx = Math.cos(angle) * s;
+        this.vy = Math.sin(angle) * s;
+        this.life = 1.0;
+        this.color = color;
+    }
+    update(dt) {
+        this.x += this.vx; this.y += this.vy;
+        this.life -= 0.03;
+        return this.life <= 0;
+    }
+    draw() {
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+function createParticles(x, y, color, count=10) {
+    for(let i=0; i<count; i++) particles.push(new Particle(x, y, color));
+}
+
+// --- MAIN LOGIC ---
+function startGame(charName) {
+    player = new Player(charName, CHARACTERS[charName]);
+    score = 0;
+    eggs = [];
+    enemies = [];
+    particles = [];
+    baseEnemySpeed = 2;
+    spawnTimer = 0;
+    enemySpawnTimer = 0;
+    
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('game-ui').classList.remove('hidden');
+    
+    // Create initial entities
+    for(let i=0; i<3; i++) eggs.push(new Egg());
+    enemies.push(new Enemy(1));
+
+    updateUI();
+    gameState = 'PLAYING';
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+}
+
+function resetToMenu() {
+    gameState = 'MENU';
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('menu-screen').classList.remove('hidden');
+    ctx.clearRect(0, 0, width, height);
+}
+
+function updateUI() {
+    document.getElementById('scoreVal').innerText = score;
+    document.getElementById('livesVal').innerText = player.lives;
+}
+
+function gameOver() {
+    gameState = 'GAMEOVER';
+    document.getElementById('game-ui').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = score;
+    jZone.style.display = 'none'; // reset joy display logic
+}
+
+function gameLoop(timestamp) {
+    if (gameState !== 'PLAYING') return;
+    const dt = timestamp - lastTime;
+    lastTime = timestamp;
+
+    ctx.clearRect(0, 0, width, height); // Clear to let CSS background shine
+
+    // Update Player
+    player.update(dt);
+
+    // Spawning Logic
+    spawnTimer += dt;
+    if (spawnTimer > 1500) {
+        if (eggs.length < 8) eggs.push(new Egg());
+        spawnTimer = 0;
+    }
+
+    enemySpawnTimer += dt;
+    let spawnRate = Math.max(2000, 5000 - (score * 20)); // Gets faster
+    if (enemySpawnTimer > spawnRate) {
+        if (enemies.length < 10 + (score/100)) enemies.push(new Enemy(1 + score/500));
+        enemySpawnTimer = 0;
+    }
+
+    // Update & Draw Eggs
+    for (let i = eggs.length - 1; i >= 0; i--) {
+        let egg = eggs[i];
+        let despawn = egg.update(dt, player);
+        egg.draw();
+
+        // Collision with player
+        let dist = Math.hypot(player.x - egg.x, player.y - egg.y);
+        if (dist < player.r + egg.r) {
+            createParticles(egg.x, egg.y, egg.color);
+            let pts = egg.type === 'GOLD' ? 50 : 10;
+            if (egg.type === 'GOLD' && player.name === 'Fil') pts *= player.multiplier;
+            score += pts;
+            eggs.splice(i, 1);
+            updateUI();
+            
+            // Difficulty curve
+            if (score % 100 === 0) baseEnemySpeed += 0.2;
+            continue;
+        }
+
+        if (despawn) eggs.splice(i, 1);
+    }
+
+    // Update & Draw Enemies
+    for (let i = 0; i < enemies.length; i++) {
+        let en = enemies[i];
+        en.update();
+        en.draw();
+
+        // Collision with player
+        let dist = Math.hypot(player.x - en.x, player.y - en.y);
+        if (dist < player.r + en.r - 5 && player.invulnerable <= 0) {
+            if (player.hasShield) {
+                player.hasShield = false;
+                player.invulnerable = 1500;
+                createParticles(player.x, player.y, '#b19cd9', 30);
+            } else {
+                player.lives--;
+                player.invulnerable = 2000; // 2 sec invulnerability
+                createParticles(player.x, player.y, '#ff4757', 20);
+                updateUI();
+                if (player.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+    }
+
+    // Update & Draw Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        if (particles[i].update(dt)) particles.splice(i, 1);
+        else particles[i].draw();
+    }
+
+    player.draw();
+
+    // Re-check joystick display for responsive mode switch if needed
+    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches && document.getElementById('joystick-zone').classList.contains('hidden')) {
+        document.getElementById('joystick-zone').classList.remove('hidden');
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
