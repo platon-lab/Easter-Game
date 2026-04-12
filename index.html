@@ -3,658 +3,985 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Пасхальний збір | Великодні герої</title>
+    <title>🐣 Пасхальний збір</title>
     <style>
-        * {
-            user-select: none;
-            touch-action: manipulation;
-            box-sizing: border-box;
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+
+        * { user-select: none; touch-action: manipulation; box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #1a0a2e;
+            font-family: 'Baloo 2', 'Segoe UI', cursive;
         }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: linear-gradient(145deg, #fde8cd 0%, #ffe0b5 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, 'Comic Neue', cursive;
-            touch-action: pan-x pan-y;
+        /* ===== ЗІРКОВИЙ ФОН ===== */
+        #bgCanvas {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 550px;
-            margin: 12px auto;
-            border-radius: 64px 64px 48px 48px;
-            background: rgba(255, 245, 225, 0.7);
-            box-shadow: 0 20px 35px rgba(200, 120, 50, 0.3);
-            backdrop-filter: blur(4px);
-            padding: 16px 10px 20px 10px;
+        /* ===== ЕКРАН ВИБОРУ ===== */
+        #characterScreen {
+            position: fixed; inset: 0; z-index: 10;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at 50% 0%, #3b1f6e 0%, #1a0a2e 70%);
+            padding: 20px;
+            overflow-y: auto;
         }
 
-        .character-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            background: #fff6e8;
-            border-radius: 60px;
-            padding: 20px 12px 30px;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .title {
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #d2694b;
-            text-shadow: 3px 3px 0 #ffd966;
-            margin-bottom: 12px;
+        .menu-title {
+            font-size: clamp(2rem, 7vw, 4rem);
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 30px #ff9f43, 0 0 60px #ff6b6b;
             text-align: center;
-            letter-spacing: 2px;
+            line-height: 1.1;
+            margin-bottom: 6px;
+            animation: titlePulse 2.5s ease-in-out infinite;
+        }
+        @keyframes titlePulse {
+            0%,100% { text-shadow: 0 0 30px #ff9f43, 0 0 60px #ff6b6b; }
+            50% { text-shadow: 0 0 50px #ffd700, 0 0 100px #ff9f43, 0 0 140px #ff6b6b; }
         }
 
-        .sub {
-            font-size: 1rem;
-            background: #f7bc6d;
-            display: inline-block;
-            padding: 6px 20px;
+        .menu-sub {
+            font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+            color: #ffcc80;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,200,100,0.3);
             border-radius: 60px;
-            color: #442200;
-            margin-bottom: 20px;
-            font-weight: bold;
+            padding: 6px 20px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(4px);
         }
 
         .char-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
             width: 100%;
+            max-width: 560px;
             justify-items: center;
-            margin: 15px 0;
+            margin-bottom: 20px;
         }
 
         .char-card {
-            background: #fff0dd;
-            border-radius: 48px;
-            padding: 12px 8px;
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,200,100,0.25);
+            border-radius: 24px;
+            padding: 14px 8px 10px;
             text-align: center;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
             width: 100%;
-            max-width: 110px;
-            border: 2px solid #ffbf80;
+            position: relative;
+            backdrop-filter: blur(6px);
         }
-        .char-card:active { transform: scale(0.96);}
+        .char-card:hover { transform: translateY(-4px); border-color: rgba(255,200,100,0.6); }
+        .char-card:active { transform: scale(0.95); }
         .char-card.selected {
-            background: #ffdd99;
-            border: 4px solid #f0a500;
-            box-shadow: 0 0 0 3px #ffdd99, 0 10px 20px rgba(0,0,0,0.2);
+            background: rgba(255,200,50,0.2);
+            border: 2.5px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255,215,0,0.4);
         }
+        .char-card.selected::after {
+            content: '✓';
+            position: absolute; top: 6px; right: 10px;
+            color: #ffd700; font-weight: bold; font-size: 1rem;
+        }
+
         .char-img {
-            width: 70px;
-            height: 70px;
-            background: #ffe3b5;
-            border-radius: 100px;
-            margin: 0 auto 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .char-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            width: 64px; height: 64px;
             border-radius: 50%;
+            margin: 0 auto 8px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden;
+            border: 2px solid rgba(255,200,100,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem;
         }
+        .char-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
         .char-name {
-            font-weight: bold;
-            font-size: 0.9rem;
-            color: #7b3f00;
+            font-weight: 800; font-size: 0.85rem; color: #fff;
+            margin-bottom: 4px;
         }
         .char-ability {
-            font-size: 0.7rem;
-            background: #ffe0b5;
-            border-radius: 40px;
-            padding: 3px 6px;
-            margin-top: 6px;
-            color: #a55217;
+            font-size: 0.68rem;
+            color: #ffcc80;
+            background: rgba(255,200,100,0.12);
+            border-radius: 30px;
+            padding: 3px 8px;
+            display: inline-block;
         }
+
         .start-btn {
-            background: #ffaa44;
+            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
             border: none;
-            font-size: 1.5rem;
-            font-weight: bold;
-            padding: 12px 35px;
+            font-family: 'Baloo 2', cursive;
+            font-size: clamp(1.2rem, 4vw, 1.7rem);
+            font-weight: 800;
+            padding: 14px 50px;
             border-radius: 100px;
-            margin-top: 20px;
-            color: #472100;
-            box-shadow: 0 7px 0 #b4621a;
-            transition: 0.07s linear;
-            cursor: pointer;
-        }
-        .start-btn:active { transform: translateY(3px); box-shadow: 0 4px 0 #b4621a;}
-
-        .game-ui {
-            display: none;
-            width: 100%;
-            flex-direction: column;
-            align-items: center;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            background: #ffe3bfcc;
-            backdrop-filter: blur(8px);
-            border-radius: 80px;
-            padding: 10px 20px;
-            margin-bottom: 12px;
-            font-weight: bold;
-            font-size: 1.4rem;
-            color: #5a2e0e;
-        }
-        .stat {
-            background: #fff0cf;
-            border-radius: 60px;
-            padding: 6px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .restart {
-            background: #cc8b4b;
-            border: none;
             color: white;
-            font-weight: bold;
-            font-size: 1.2rem;
-            padding: 6px 20px;
-            border-radius: 40px;
+            box-shadow: 0 8px 0 #c0392b, 0 0 30px rgba(255,100,100,0.5);
             cursor: pointer;
-            box-shadow: 0 3px 0 #6a3e1a;
-            transition: 0.05s linear;
+            transition: 0.07s linear;
+            letter-spacing: 1px;
         }
-        .restart:active { transform: translateY(2px); box-shadow: none;}
+        .start-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #c0392b; }
 
-        canvas {
+        .legend {
+            display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; justify-content: center;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 6px;
+            color: rgba(255,255,255,0.7); font-size: 0.8rem;
+        }
+
+        /* ===== ІГРОВИЙ ЕКРАН ===== */
+        #gameUI {
+            position: fixed; inset: 0; z-index: 10;
+            display: none; flex-direction: column;
+            background: transparent;
+        }
+
+        #hud {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,200,100,0.15);
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .hud-stat {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,200,100,0.25);
+            border-radius: 40px;
+            padding: 6px 14px;
+            display: flex; align-items: center; gap: 6px;
+            font-weight: 800; font-size: clamp(0.9rem, 3vw, 1.3rem);
+            color: #fff;
+        }
+        .combo-hud {
+            background: linear-gradient(135deg, rgba(255,100,50,0.3), rgba(255,200,0,0.3));
+            border-color: rgba(255,150,50,0.6);
+            transition: all 0.3s;
+        }
+        .combo-hud.active {
+            box-shadow: 0 0 15px rgba(255,150,50,0.6);
+            animation: comboPulse 0.4s ease-out;
+        }
+        @keyframes comboPulse { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .restart-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            border-radius: 30px;
+            color: white; font-family: 'Baloo 2', cursive;
+            font-weight: 700; font-size: 0.9rem;
+            padding: 6px 14px; cursor: pointer;
+            transition: 0.15s;
+        }
+        .restart-btn:active { background: rgba(255,255,255,0.25); }
+
+        #gameCanvas {
             display: block;
-            margin: 0 auto;
-            background: radial-gradient(circle at 20% 30%, #b7dc9c, #92b86b);
-            border-radius: 48px;
-            box-shadow: 0 20px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            height: auto;
-            cursor: pointer;
+            flex: 1;
+            width: 100%; height: 100%;
             touch-action: none;
+            cursor: none;
         }
-        .controls-note {
-            font-size: 0.8rem;
-            background: #ffefcf;
-            margin-top: 12px;
-            padding: 6px 12px;
-            border-radius: 60px;
-            color: #8b5a2b;
+
+        /* ===== ЕФЕКТИ ПОВЕРХ CANVAS ===== */
+        #fxLayer {
+            position: fixed; inset: 0; pointer-events: none; z-index: 20;
+            overflow: hidden;
         }
-        @media (max-width: 550px) {
-            .char-img { width: 55px; height: 55px;}
-            .stats { font-size: 1.1rem; padding: 5px 12px;}
-            .stat { padding: 3px 10px;}
-            .title { font-size: 1.8rem;}
+
+        .fx-text {
+            position: absolute;
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            pointer-events: none;
+            animation: fxFloat 1s ease-out forwards;
+        }
+        @keyframes fxFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.4); }
+        }
+
+        /* ===== POWER-UP ІКОНКИ ===== */
+        .powerup-bar {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .powerup-pill {
+            background: linear-gradient(135deg, #ffd700, #ff9f43);
+            border-radius: 20px; padding: 3px 10px;
+            font-size: 0.75rem; font-weight: 700; color: #1a0a2e;
+            animation: powerGlow 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes powerGlow { from { box-shadow: 0 0 4px #ffd700; } to { box-shadow: 0 0 14px #ff9f43; } }
+
+        /* ===== ПАУЗА / GAME OVER ===== */
+        #overlay {
+            position: fixed; inset: 0; z-index: 30;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(10,5,25,0.85);
+            backdrop-filter: blur(12px);
+        }
+        .overlay-box {
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,200,100,0.3);
+            border-radius: 32px;
+            padding: 40px 40px 32px;
+            text-align: center;
+            max-width: 380px; width: 90%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        .overlay-title {
+            font-size: 2.5rem; font-weight: 800; color: #ffd700;
+            text-shadow: 0 0 20px #ff9f43; margin-bottom: 10px;
+        }
+        .overlay-score {
+            font-size: 3.5rem; font-weight: 800; color: white;
+            margin: 10px 0 4px;
+        }
+        .overlay-label { color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 24px; }
+        .overlay-btn {
+            background: linear-gradient(135deg, #ff9f43, #ff6b6b);
+            border: none; border-radius: 60px;
+            font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 800;
+            color: white; padding: 12px 36px; cursor: pointer; margin: 6px;
+            box-shadow: 0 6px 0 #c0392b;
+            transition: 0.07s;
+        }
+        .overlay-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #c0392b; }
+        .overlay-btn.secondary {
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            box-shadow: none; color: rgba(255,255,255,0.85);
+        }
+        .overlay-btn.secondary:active { transform: translateY(1px); }
+
+        /* ===== РАХУНОК ХАЙСКОР ===== */
+        .highscore-line { color: #ffcc80; font-size: 0.95rem; margin-bottom: 20px; }
+
+        @media (max-width: 400px) {
+            .char-grid { grid-template-columns: repeat(2, 1fr); }
+            .char-img { width: 54px; height: 54px; }
         }
     </style>
 </head>
 <body>
-<div class="game-container" id="gameContainer">
-    <div id="characterScreen" class="character-screen">
-        <div class="title">🐣 ПАСХАЛЬНИЙ ЗБІР 🥚</div>
-        <div class="sub">обери свого героя (зображення з папки)</div>
-        <div class="char-grid" id="charGrid"></div>
-        <button id="startGameBtn" class="start-btn">🌷 ПОЧАТИ ГРУ 🌼</button>
-    </div>
 
-    <div id="gameUI" class="game-ui">
-        <div class="stats">
-            <div class="stat">🥚 ОЧКИ: <span id="scoreValue">0</span></div>
-            <div class="stat">❤️ ЖИТТЯ: <span id="healthValue">3</span></div>
-            <button id="restartBtn" class="restart">🔄 RESTART</button>
-        </div>
-        <canvas id="gameCanvas" width="500" height="600"></canvas>
-        <div class="controls-note">
-            📱 Свайп / миша | 💻 WASD або рух миші
-        </div>
+<canvas id="bgCanvas"></canvas>
+<div id="fxLayer"></div>
+
+<!-- ЕКРАН ВИБОРУ ГЕРОЯ -->
+<div id="characterScreen">
+    <div class="menu-title">🐣 ПАСХАЛЬНИЙ<br>ЗБІР 🥚</div>
+    <div class="menu-sub">✨ Обери свого пасхального героя ✨</div>
+    <div class="char-grid" id="charGrid"></div>
+    <div class="legend">
+        <div class="legend-item">🌟 <span>Золоте яйце = +5 очок</span></div>
+        <div class="legend-item">💣 <span>Бомба = -2 очки</span></div>
+        <div class="legend-item">⚡ <span>Блискавка = +3 та КОМБО</span></div>
+        <div class="legend-item">🍀 <span>Конюшина = +1 життя</span></div>
+    </div>
+    <button id="startGameBtn" class="start-btn" style="margin-top:20px">🌷 ПОЧАТИ ГРУ 🌼</button>
+</div>
+
+<!-- ІГРОВИЙ ІНТЕРФЕЙС -->
+<div id="gameUI">
+    <div id="hud">
+        <div class="hud-stat">🥚 <span id="scoreValue">0</span></div>
+        <div class="hud-stat combo-hud" id="comboHud">⚡ x<span id="comboValue">1</span></div>
+        <div class="hud-stat">❤️ <span id="healthValue">3</span></div>
+        <button class="restart-btn" id="restartBtn">🔄 Меню</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<!-- OVERLAY GAME OVER -->
+<div id="overlay">
+    <div class="overlay-box">
+        <div class="overlay-title" id="overlayTitle">🎉 МОЛОДЕЦЬ!</div>
+        <div class="overlay-score" id="overlayScore">0</div>
+        <div class="overlay-label">очок</div>
+        <div class="highscore-line" id="highscoreLabel">🏆 Рекорд: 0</div>
+        <button class="overlay-btn" id="playAgainBtn">🔁 Грати ще</button>
+        <button class="overlay-btn secondary" id="menuBtn">🏠 Меню</button>
     </div>
 </div>
 
 <script>
-    (function(){
-        // ПЕРСОНАЖІ ТІЛЬКИ З ФАЙЛАМИ: Tito.png, Smartik.png, Junior.png, Fil.png, Milka.png, Bark.png
-        // ЖОДНИХ ТЕКСТОВИХ ЗАМІННИКІВ, НІЯКИХ ЕМОДЗІ-ЗАГЛУШОК
-        const characters = [
-            { id: "Tito",  name: "Tito",  displayName: "Яйціто",  ability: "Спіймай +2 очка за яйце", bonus: 2, special: "doublePoints", imgFile: "Tito.png" },
-            { id: "Smartik", name: "Smartik", displayName: "Паскмартик", ability: "Яйця падають повільніше", special: "slowEggs", imgFile: "Smartik.png" },
-            { id: "Junior", name: "Junior", displayName: "Ковбасуніор", ability: "Швидший збір (+швидкість гравця)", special: "fastMove", imgFile: "Junior.png" },
-            { id: "Fil", name: "Fil", displayName: "Хрінфіл", ability: "Початкове життя +1", special: "extraLife", imgFile: "Fil.png" },
-            { id: "Milka", name: "Milka", displayName: "Салмілка", ability: "Золоті яйця +5 очок", special: "goldenBoost", imgFile: "Milka.png" },
-            { id: "Bark", name: "Bark", displayName: "Холобарк", ability: "Збирає два яйця разом", special: "doubleCollect", imgFile: "Bark.png" }
-        ];
+(function(){
+'use strict';
 
-        let currentCharacter = null;
-        let gameActive = false;
-        let animationId = null;
-        let canvas, ctx;
-        let gameWidth = 500, gameHeight = 600;
+// ===== ПЕРСОНАЖІ =====
+const characters = [
+    { id:"Tito",    displayName:"Яйціто",     ability:"⚡ +2 очка за яйце", special:"doublePoints", imgFile:"Tito.png",    emoji:"🐣" },
+    { id:"Smartik", displayName:"Паскмартик", ability:"🐢 Яйця повільніші", special:"slowEggs",     imgFile:"Smartik.png", emoji:"🦔" },
+    { id:"Junior",  displayName:"Ковбасуніор",     ability:"💨 Швидший гравець", special:"fastMove",     imgFile:"Junior.png",  emoji:"🐇" },
+    { id:"Fil",     displayName:"Хрінфіл",    ability:"❤️ +1 початкове життя", special:"extraLife", imgFile:"Fil.png",     emoji:"🐻" },
+    { id:"Milka",   displayName:"Салмілка",   ability:"🌟 Золоті яйця +8",   special:"goldenBoost", imgFile:"Milka.png",   emoji:"🐱" },
+    { id:"Bark",    displayName:"Холобарк",   ability:"🧲 Збирає 2 яйця",    special:"doubleCollect",imgFile:"Bark.png",   emoji:"🐶" }
+];
 
-        let score = 0;
-        let health = 3;
-        let player = { x: gameWidth/2, y: gameHeight - 70, radius: 22 };
-        let eggs = [];
-        let frameCounter = 0;
-        let eggSpawnDelay = 35;
-        let baseEggSpeed = 2.2;
-        let doublePointsFlag = false;
-        let slowEggsFlag = false;
-        let fastMoveFlag = false;
-        let goldenBoostFlag = false;
-        let doubleCollectFlag = false;
-        let extraLifeGiven = false;
+// ===== СТАН =====
+let currentCharacter = null, gameActive = false, animationId = null;
+let canvas, ctx, bgCanvas, bgCtx;
+let GW, GH; // розміри підлаштовуються під екран
+let score = 0, health = 3, combo = 1, comboTimer = 0;
+let player, eggs, particles, floats, frameCounter;
+let eggSpawnDelay, baseEggSpeed;
+let doublePointsFlag, slowEggsFlag, fastMoveFlag, goldenBoostFlag, doubleCollectFlag;
+let highscore = parseInt(localStorage.getItem('esc_hs')||'0');
+let playerImage = null;
+let mouseX, targetX, keys = {a:false,d:false};
+let bgStars = [];
+let cursorX = 0, cursorY = 0;
 
-        let mouseX = player.x;
-        let targetX = player.x;
-        let keys = { a: false, d: false };
-        let playerImage = null;
+// ===== ФОН ЗІРКИ =====
+function initBg(){
+    bgCanvas = document.getElementById('bgCanvas');
+    bgCtx = bgCanvas.getContext('2d');
+    resizeBg();
+    bgStars = Array.from({length:120}, ()=>({
+        x: Math.random()*bgCanvas.width,
+        y: Math.random()*bgCanvas.height,
+        r: Math.random()*1.8+0.3,
+        sp: Math.random()*0.3+0.05,
+        a: Math.random()
+    }));
+    animateBg();
+}
+function resizeBg(){
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+}
+function animateBg(){
+    const bw = bgCanvas.width, bh = bgCanvas.height;
+    bgCtx.clearRect(0,0,bw,bh);
+    const grad = bgCtx.createRadialGradient(bw/2,0,0,bw/2,bh,bh);
+    grad.addColorStop(0,'#3b1f6e');
+    grad.addColorStop(1,'#0d0620');
+    bgCtx.fillStyle = grad;
+    bgCtx.fillRect(0,0,bw,bh);
+    for(let s of bgStars){
+        s.a += s.sp * 0.03;
+        const alpha = 0.4 + 0.6*Math.abs(Math.sin(s.a));
+        bgCtx.beginPath();
+        bgCtx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        bgCtx.fillStyle = `rgba(255,255,220,${alpha})`;
+        bgCtx.fill();
+    }
+    requestAnimationFrame(animateBg);
+}
 
-        // Завантаження справжньої картинки з файлу, без підміни на текст/емодзі
-        function loadRealImage(src) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => {
-                    // Якщо картинка не завантажилась — повертаємо null, але НЕ створюємо текстову заглушку
-                    // У грі буде намальований стандартний стилізований персонаж (без емодзі/літер)
-                    resolve(null);
-                };
-                img.src = src;
-            });
-        }
+// ===== ЗАВАНТАЖЕННЯ КАРТИНОК =====
+function loadImg(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=()=>r(null); i.src=src; }); }
 
-        async function preloadHeroImages() {
-            for(let ch of characters) {
-                await loadRealImage(ch.imgFile);
-            }
-        }
-
-        function initCharactersUI() {
-            const grid = document.getElementById('charGrid');
-            grid.innerHTML = '';
-            characters.forEach(char => {
-                const card = document.createElement('div');
-                card.className = 'char-card';
-                card.dataset.id = char.id;
-                // Відображаємо реальне фото з файлу, без текстових заглушок
-                card.innerHTML = `
-                    <div class="char-img"><img src="${char.imgFile}" alt="${char.displayName}"></div>
-                    <div class="char-name">${char.displayName}</div>
-                    <div class="char-ability">${char.ability}</div>
-                `;
-                card.addEventListener('click', async () => {
-                    document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    currentCharacter = char;
-                    // Завантажуємо реальне зображення для гравця
-                    const img = await loadRealImage(char.imgFile);
-                    if(img) {
-                        playerImage = img;
-                    } else {
-                        playerImage = null;
-                    }
-                });
-                grid.appendChild(card);
-            });
-            const firstCard = document.querySelector('.char-card');
-            if(firstCard) {
-                firstCard.classList.add('selected');
-                currentCharacter = characters[0];
-                loadRealImage(characters[0].imgFile).then(img => {
-                    if(img) playerImage = img;
-                    else playerImage = null;
-                });
-            }
-        }
-
-        function applyCharacterBonuses() {
-            if(!currentCharacter) return;
-            doublePointsFlag = (currentCharacter.special === 'doublePoints');
-            slowEggsFlag = (currentCharacter.special === 'slowEggs');
-            fastMoveFlag = (currentCharacter.special === 'fastMove');
-            goldenBoostFlag = (currentCharacter.special === 'goldenBoost');
-            doubleCollectFlag = (currentCharacter.special === 'doubleCollect');
-            if(currentCharacter.special === 'extraLife' && !extraLifeGiven) {
-                health += 1;
-                extraLifeGiven = true;
-                document.getElementById('healthValue').innerText = health;
-            }
-            if(slowEggsFlag) baseEggSpeed = 1.5;
-            else baseEggSpeed = 2.2;
-            if(fastMoveFlag) player.radius = 26;
-            else player.radius = 22;
-        }
-
-        function startGame() {
-            if(!currentCharacter) {
-                alert("Оберіть пасхального героя!");
-                return;
-            }
-            score = 0;
-            health = 3;
-            extraLifeGiven = false;
-            eggs = [];
-            frameCounter = 0;
-            eggSpawnDelay = 35;
-            targetX = gameWidth/2;
-            mouseX = gameWidth/2;
-            player.x = gameWidth/2;
-            applyCharacterBonuses();
-            if(currentCharacter.special === 'extraLife') {
-                health = 4;
-                extraLifeGiven = true;
-            } else {
-                if(health !== 3) health = 3;
-            }
-            document.getElementById('scoreValue').innerText = score;
-            document.getElementById('healthValue').innerText = health;
-            document.getElementById('characterScreen').style.display = 'none';
-            document.getElementById('gameUI').style.display = 'flex';
-            gameActive = true;
-            if(animationId) cancelAnimationFrame(animationId);
-            animationId = requestAnimationFrame(gameLoop);
-        }
-
-        function restartGame() {
-            if(animationId) cancelAnimationFrame(animationId);
-            gameActive = false;
-            document.getElementById('characterScreen').style.display = 'flex';
-            document.getElementById('gameUI').style.display = 'none';
-            currentCharacter = null;
-            extraLifeGiven = false;
-            eggs = [];
-            score = 0;
-            health = 3;
-            if(animationId) cancelAnimationFrame(animationId);
-        }
-
-        function spawnEgg() {
-            let isGolden = false;
-            if(goldenBoostFlag && Math.random() < 0.12) isGolden = true;
-            else if(Math.random() < 0.07) isGolden = true;
-            let value = isGolden ? 5 : 1;
-            if(doublePointsFlag && !isGolden) value = 2;
-            const radius = isGolden ? 14 : 12;
-            eggs.push({
-                x: 20 + Math.random() * (gameWidth - 40),
-                y: -radius,
-                radius: radius,
-                value: value,
-                isGolden: isGolden,
-                speed: baseEggSpeed + (Math.random() * 0.8)
-            });
-        }
-
-        function updateEggs() {
-            for(let i=0; i<eggs.length; i++) eggs[i].y += eggs[i].speed;
-            let lostLife = false;
-            eggs = eggs.filter(e => {
-                if(e.y + e.radius > gameHeight + 30) {
-                    lostLife = true;
-                    return false;
-                }
-                return e.y + e.radius >= -50;
-            });
-            if(lostLife && gameActive) {
-                health--;
-                document.getElementById('healthValue').innerText = health;
-                if(health <= 0) gameOver();
-            }
-        }
-
-        function collectEggs() {
-            for(let i=0; i<eggs.length; i++) {
-                const e = eggs[i];
-                const dx = player.x - e.x;
-                const dy = player.y - e.y;
-                if(Math.hypot(dx, dy) < player.radius + e.radius) {
-                    let addScore = e.value;
-                    if(doubleCollectFlag) addScore = e.value * 2;
-                    score += addScore;
-                    eggs.splice(i,1);
-                    i--;
-                }
-            }
-            document.getElementById('scoreValue').innerText = score;
-        }
-
-        function gameOver() {
-            gameActive = false;
-            cancelAnimationFrame(animationId);
-            alert(`🎉 Гра завершена! 🥚 Ваш результат: ${score} очок. Натисніть RESTART.`);
-            restartGame();
-        }
-
-        function updatePlayerPosition() {
-            if(!gameActive) return;
-            let move = 0;
-            const speed = fastMoveFlag ? 8.6 : 6.2;
-            if(keys.d) move += 1;
-            if(keys.a) move -= 1;
-            if(move !== 0) targetX += move * speed;
-            else targetX = mouseX;
-            targetX = Math.min(Math.max(targetX, 20 + player.radius), gameWidth - 20 - player.radius);
-            player.x += (targetX - player.x) * 0.32;
-            player.x = Math.min(Math.max(player.x, 15 + player.radius), gameWidth - 15 - player.radius);
-        }
-
-        function draw() {
-            if(!ctx) return;
-            ctx.clearRect(0, 0, gameWidth, gameHeight);
-            ctx.fillStyle = "#aad576";
-            ctx.fillRect(0, 0, gameWidth, gameHeight);
-            for(let i=0;i<20;i++) {
-                ctx.fillStyle = "#87b33c";
-                ctx.beginPath();
-                ctx.moveTo(i*40, gameHeight-40);
-                ctx.lineTo(i*40+15, gameHeight-70);
-                ctx.lineTo(i*40-15, gameHeight-70);
-                ctx.fill();
-            }
-            for(let f=0;f<12;f++) {
-                ctx.fillStyle = ["#ffb7b2","#ffd966","#f4c2c2","#c0e0b0"][f%4];
-                ctx.beginPath();
-                ctx.arc(35+(f*47)%gameWidth, gameHeight-25 + Math.sin(f)*5, 6, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "#efb87e";
-                ctx.beginPath();
-                ctx.arc(35+(f*47)%gameWidth, gameHeight-28 + Math.sin(f)*5, 3, 0, Math.PI*2);
-                ctx.fill();
-            }
-            for(let e of eggs) {
-                if(e.isGolden) {
-                    ctx.fillStyle = "#FFD966";
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = "#ffbf00";
-                } else {
-                    ctx.fillStyle = "#FFB347";
-                    ctx.shadowBlur = 6;
-                    ctx.shadowColor = "#e0a878";
-                }
-                ctx.beginPath();
-                ctx.ellipse(e.x, e.y, e.radius, e.radius*1.2, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = e.isGolden ? "#ffaa33" : "#f2851c";
-                ctx.beginPath();
-                ctx.ellipse(e.x-2, e.y-2, 2, 3, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "#ffffffcc";
-                ctx.beginPath();
-                ctx.ellipse(e.x+1, e.y-3, 1.5, 2, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.beginPath();
-                ctx.strokeStyle = "#d45a1a";
-                ctx.lineWidth = 1.2;
-                ctx.moveTo(e.x-3, e.y-1);
-                ctx.lineTo(e.x+3, e.y-1);
-                ctx.stroke();
-            }
-            ctx.shadowBlur = 8;
-            ctx.fillStyle = "#e8c38b";
-            ctx.beginPath();
-            ctx.ellipse(player.x, player.y, player.radius, player.radius*0.9, 0, 0, Math.PI*2);
-            ctx.fill();
-            
-            // МАЛЮЄМО РЕАЛЬНЕ ЗОБРАЖЕННЯ ГЕРОЯ З ФАЙЛУ, БЕЗ ТЕКСТУ/ЕМОДЗІ
-            if(playerImage && playerImage.complete && playerImage.naturalWidth > 0 && playerImage.naturalHeight > 0) {
-                try {
-                    ctx.save();
-                    ctx.shadowBlur = 0;
-                    ctx.drawImage(playerImage, player.x-20, player.y-24, 40, 40);
-                    ctx.restore();
-                } catch(e) {}
-            } else {
-                // Якщо зображення відсутнє або не завантажилось — малюємо стилізованого зайчика/персонажа,
-                // але БЕЗ ЖОДНИХ ЛІТЕР ТА ЕМОДЗІ (чисте малювання)
-                ctx.fillStyle = "#bf7f40";
-                ctx.beginPath();
-                ctx.ellipse(player.x-5, player.y-4, 6, 7, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "#2e1b0e";
-                ctx.beginPath();
-                ctx.ellipse(player.x+2, player.y-3, 5, 6, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "white";
-                ctx.beginPath();
-                ctx.arc(player.x-8, player.y-8, 3.5, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "#3b250a";
-                ctx.beginPath();
-                ctx.arc(player.x-9, player.y-9, 1.5, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "white";
-                ctx.beginPath();
-                ctx.arc(player.x, player.y-8, 3.5, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = "#3b250a";
-                ctx.beginPath();
-                ctx.arc(player.x-1, player.y-9, 1.5, 0, Math.PI*2);
-                ctx.fill();
-                // носик
-                ctx.fillStyle = "#e07a2c";
-                ctx.beginPath();
-                ctx.ellipse(player.x-4, player.y-3, 2, 2.5, 0, 0, Math.PI*2);
-                ctx.fill();
-            }
-            // вушка або пасхальний капелюшок (декорація)
-            ctx.fillStyle = "#f7bc45";
-            ctx.beginPath();
-            ctx.moveTo(player.x-12, player.y+2);
-            ctx.lineTo(player.x, player.y+14);
-            ctx.lineTo(player.x+12, player.y+2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.font = "bold 12px 'Quicksand'";
-            ctx.fillStyle = "#3c280f";
-            let abilityText = currentCharacter ? currentCharacter.ability.substring(0,16) : "Збери яйця";
-            ctx.fillText(`✨ ${abilityText}`, 12, 40);
-        }
-
-        function increaseDifficulty() {
-            if(frameCounter % 450 === 0 && eggSpawnDelay > 18) eggSpawnDelay = Math.max(18, eggSpawnDelay-2);
-            if(frameCounter % 700 === 0 && baseEggSpeed < 4.0 && !slowEggsFlag) baseEggSpeed += 0.2;
-            else if(slowEggsFlag && frameCounter % 800 === 0 && baseEggSpeed < 2.8) baseEggSpeed += 0.1;
-        }
-
-        function gameLoop() {
-            if(!gameActive) return;
-            updatePlayerPosition();
-            frameCounter++;
-            if(frameCounter % Math.max(18, eggSpawnDelay) === 0) {
-                spawnEgg();
-                if(Math.random()<0.2 && frameCounter>100) spawnEgg();
-            }
-            updateEggs();
-            collectEggs();
-            increaseDifficulty();
-            draw();
-            if(health <= 0 && gameActive) gameOver();
-            animationId = requestAnimationFrame(gameLoop);
-        }
-
-        function handleMouseMove(e) {
-            if(!gameActive) return;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            let canvasX = (clientX - rect.left) * scaleX;
-            canvasX = Math.min(Math.max(canvasX, 10), gameWidth-10);
-            mouseX = canvasX;
-            targetX = mouseX;
-            if(e.touches) e.preventDefault();
-        }
-
-        function initControls() {
-            canvas = document.getElementById('gameCanvas');
-            ctx = canvas.getContext('2d');
-            canvas.width = gameWidth;
-            canvas.height = gameHeight;
-            canvas.addEventListener('mousemove', (e) => { if(gameActive) handleMouseMove(e); });
-            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(gameActive) handleMouseMove(e); }, { passive: false });
-            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(gameActive) handleMouseMove(e); });
-            window.addEventListener('keydown', (e) => {
-                const key = e.key.toLowerCase();
-                if(key === 'a' || key === 'arrowleft') keys.a = true;
-                if(key === 'd' || key === 'arrowright') keys.d = true;
-                if(key === 'w' || key === 'arrowup') keys.w = true;
-                if(key === 's' || key === 'arrowdown') keys.s = true;
-                e.preventDefault();
-            });
-            window.addEventListener('keyup', (e) => {
-                const key = e.key.toLowerCase();
-                if(key === 'a' || key === 'arrowleft') keys.a = false;
-                if(key === 'd' || key === 'arrowright') keys.d = false;
-                if(key === 'w' || key === 'arrowup') keys.w = false;
-                if(key === 's' || key === 'arrowdown') keys.s = false;
-            });
-        }
-
-        function resizeCanvasDisplay() {
-            if(canvas) {
-                const maxWidth = Math.min(500, window.innerWidth - 40);
-                canvas.style.width = `${maxWidth}px`;
-                canvas.style.height = 'auto';
-            }
-        }
-
-        window.addEventListener('load', async () => {
-            await preloadHeroImages();
-            initCharactersUI();
-            initControls();
-            resizeCanvasDisplay();
-            window.addEventListener('resize', resizeCanvasDisplay);
-            document.getElementById('startGameBtn').addEventListener('click', startGame);
-            document.getElementById('restartBtn').addEventListener('click', () => {
-                if(gameActive) {
-                    gameActive = false;
-                    if(animationId) cancelAnimationFrame(animationId);
-                }
-                restartGame();
-            });
+// ===== UI ПЕРСОНАЖІВ =====
+async function initCharactersUI(){
+    const grid = document.getElementById('charGrid');
+    grid.innerHTML='';
+    for(let char of characters){
+        const img = await loadImg(char.imgFile);
+        const card = document.createElement('div');
+        card.className='char-card'; card.dataset.id=char.id;
+        const imgContent = img
+            ? `<img src="${char.imgFile}" alt="${char.displayName}">`
+            : `<span style="font-size:2.2rem">${char.emoji}</span>`;
+        card.innerHTML=`
+            <div class="char-img">${imgContent}</div>
+            <div class="char-name">${char.displayName}</div>
+            <div class="char-ability">${char.ability}</div>`;
+        card.addEventListener('click', async ()=>{
+            document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('selected'));
+            card.classList.add('selected');
+            currentCharacter = char;
+            playerImage = img;
         });
-    })();
+        grid.appendChild(card);
+    }
+    const first = document.querySelector('.char-card');
+    if(first){ first.click(); }
+}
+
+// ===== РОЗМІР CANVAS =====
+function resizeCanvas(){
+    if(!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - document.getElementById('hud').offsetHeight;
+    GW = canvas.width; GH = canvas.height;
+    if(player){ player.y = GH - 70; }
+    mouseX = GW/2; targetX = GW/2;
+}
+
+// ===== СТАРТ =====
+function startGame(){
+    if(!currentCharacter){ alert("Оберіть героя!"); return; }
+    score=0; health=3; combo=1; comboTimer=0;
+    eggs=[]; particles=[]; floats=[]; frameCounter=0;
+    eggSpawnDelay=40; baseEggSpeed=1.8;
+    doublePointsFlag = currentCharacter.special==='doublePoints';
+    slowEggsFlag     = currentCharacter.special==='slowEggs';
+    fastMoveFlag     = currentCharacter.special==='fastMove';
+    goldenBoostFlag  = currentCharacter.special==='goldenBoost';
+    doubleCollectFlag= currentCharacter.special==='doubleCollect';
+    if(currentCharacter.special==='extraLife') health=4;
+    if(slowEggsFlag) baseEggSpeed=1.2;
+    GW = canvas.width; GH = canvas.height;
+    player = { x:GW/2, y:GH-70, radius: fastMoveFlag?28:22 };
+    mouseX=GW/2; targetX=GW/2;
+    updateHUD();
+    document.getElementById('characterScreen').style.display='none';
+    document.getElementById('gameUI').style.display='flex';
+    document.getElementById('overlay').style.display='none';
+    resizeCanvas();
+    gameActive=true;
+    if(animationId) cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function restartToMenu(){
+    gameActive=false;
+    if(animationId) cancelAnimationFrame(animationId);
+    document.getElementById('gameUI').style.display='none';
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('characterScreen').style.display='flex';
+}
+
+function restartSame(){
+    document.getElementById('overlay').style.display='none';
+    startGame();
+}
+
+function updateHUD(){
+    document.getElementById('scoreValue').innerText = score;
+    document.getElementById('healthValue').innerText = health;
+    document.getElementById('comboValue').innerText = combo;
+    const ch = document.getElementById('comboHud');
+    ch.classList.toggle('active', combo>1);
+}
+
+// ===== ОБ'ЄКТИ =====
+const EGG_TYPES = [
+    { type:'normal',  color:['#FF6B9D','#C44569'], color2:['#FF8E53','#FE3232'], chance:0.52, value:1, radius:14, pattern:'stripes' },
+    { type:'normal2', color:['#6C5CE7','#A29BFE'], color2:['#74B9FF','#0984E3'], chance:0.20, value:1, radius:13, pattern:'dots'    },
+    { type:'normal3', color:['#00B894','#55EFC4'], color2:['#00CEC9','#81ECEC'], chance:0.10, value:1, radius:13, pattern:'zigzag'  },
+    { type:'golden',  color:['#FFD700','#F39C12'], color2:['#FDCB6E','#E17055'], chance:0.07, value:5, radius:16, pattern:'stars',  glow:true },
+    { type:'star',    color:['#00B2FF','#6DD5FA'], color2:['#f7971e','#ffd200'], chance:0.04, value:3, radius:14, pattern:'cross',  combo:true },
+    { type:'bomb',    color:['#2d3436','#636e72'], color2:['#b2bec3','#dfe6e9'], chance:0.04, value:-2, radius:15, pattern:'bomb', bomb:true },
+    { type:'clover',  color:['#55efc4','#00b894'], color2:['#fdcb6e','#e17055'], chance:0.03, value:0, radius:13, pattern:'clover', heal:true }
+];
+
+function pickEggType(){
+    let r = Math.random();
+    let cum = 0;
+    for(let t of EGG_TYPES){
+        cum += t.chance;
+        if(r < cum) return t;
+    }
+    return EGG_TYPES[0];
+}
+
+function spawnEgg(){
+    let t = pickEggType();
+    if(goldenBoostFlag && t.type==='golden') t = {...t, value:8};
+    const radius = t.radius;
+    const angle = (Math.random()-0.5)*0.3;
+    eggs.push({
+        x: 30 + Math.random()*(GW-60),
+        y: -radius,
+        radius,
+        type: t,
+        value: t.value,
+        speed: baseEggSpeed + Math.random()*0.7 + (t.bomb?0.3:0),
+        angle, wobble: Math.random()*Math.PI*2,
+        wobbleAmp: 0.5+Math.random()*1.5,
+        rot: 0, rotSpeed: (Math.random()-0.5)*0.04
+    });
+}
+
+// ===== ЧАСТИНКИ =====
+function spawnParticles(x, y, color, count=8){
+    for(let i=0;i<count;i++){
+        const a = (Math.PI*2/count)*i + Math.random()*0.5;
+        const sp = 2+Math.random()*4;
+        particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-2,
+            r: 3+Math.random()*4, color, life:1, decay:0.03+Math.random()*0.02 });
+    }
+}
+function spawnStarBurst(x,y){
+    const colors=['#FFD700','#FF6B6B','#74B9FF','#55EFC4','#FD79A8'];
+    for(let i=0;i<16;i++){
+        const a = (Math.PI*2/16)*i;
+        const sp = 3+Math.random()*6;
+        particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+            r:2+Math.random()*5, color:colors[i%colors.length], life:1, decay:0.025+Math.random()*0.02 });
+    }
+}
+
+function spawnFloatText(x,y,text,color){
+    const el = document.createElement('div');
+    el.className='fx-text';
+    el.style.cssText=`left:${x}px;top:${y}px;color:${color};font-size:${text.length<4?'1.8rem':'1.2rem'}`;
+    el.textContent=text;
+    document.getElementById('fxLayer').appendChild(el);
+    setTimeout(()=>el.remove(), 1000);
+}
+
+// ===== ГРАВЕЦЬ =====
+function updatePlayer(){
+    if(!gameActive) return;
+    const speed = fastMoveFlag ? 9 : 6.5;
+    let move=0;
+    if(keys.d) move+=1;
+    if(keys.a) move-=1;
+    if(move!==0) targetX += move*speed;
+    else targetX = mouseX;
+    targetX = Math.min(Math.max(targetX, 20+player.radius), GW-20-player.radius);
+    player.x += (targetX-player.x)*0.3;
+    player.x = Math.min(Math.max(player.x, player.radius+10), GW-player.radius-10);
+    cursorX = mouseX; // track для cursor
+}
+
+// ===== МАЛЮВАННЯ ЯЄЦЬs =====
+function drawEgg(e){
+    const {x,y,radius,type,wobble,rot} = e;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(rot);
+
+    if(type.glow){
+        ctx.shadowBlur=25; ctx.shadowColor='#FFD700';
+    } else if(type.type==='star'){
+        ctx.shadowBlur=20; ctx.shadowColor='#00B2FF';
+    } else if(type.bomb){
+        ctx.shadowBlur=15; ctx.shadowColor='#e17055';
+    } else if(type.heal){
+        ctx.shadowBlur=18; ctx.shadowColor='#55efc4';
+    }
+
+    // Тіло яйця
+    const ew = radius, eh = radius*1.3;
+    const grd = ctx.createRadialGradient(-ew*0.3,-eh*0.3, ew*0.1, 0, 0, ew*1.4);
+    grd.addColorStop(0, type.color[0]+'ee');
+    grd.addColorStop(1, type.color[1]);
+    ctx.beginPath();
+    ctx.ellipse(0,0,ew,eh,0,0,Math.PI*2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Візерунок
+    ctx.shadowBlur=0;
+    if(type.pattern==='stripes'){
+        // Горизонтальні смужки
+        ctx.save();
+        ctx.clip(); // clip inside egg shape
+        ctx.beginPath(); ctx.ellipse(0,0,ew,eh,0,0,Math.PI*2); ctx.clip();
+        for(let i=-3;i<=3;i++){
+            ctx.fillStyle = i%2===0 ? type.color2[0]+'80' : type.color2[1]+'60';
+            ctx.fillRect(-ew, i*eh*0.32-eh*0.18, ew*2, eh*0.28);
+        }
+        ctx.restore();
+    } else if(type.pattern==='dots'){
+        const positions=[[0,-eh*0.4],[ew*0.35,-eh*0.15],[-ew*0.35,-eh*0.15],[0,eh*0.1],[ew*0.25,eh*0.35],[-ew*0.25,eh*0.35]];
+        ctx.fillStyle=type.color2[0]+'cc';
+        for(const [px,py] of positions){
+            ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2); ctx.fill();
+        }
+    } else if(type.pattern==='zigzag'){
+        ctx.save();
+        ctx.beginPath(); ctx.ellipse(0,0,ew,eh,0,0,Math.PI*2); ctx.clip();
+        ctx.strokeStyle=type.color2[0]+'bb'; ctx.lineWidth=2.5;
+        ctx.beginPath();
+        for(let i=-4;i<=4;i++){
+            const py = i*eh*0.25;
+            ctx.moveTo(-ew, py);
+            for(let j=0;j<6;j++){
+                const px = -ew + j*(ew*2/5);
+                ctx.lineTo(px, py+(j%2===0?-8:8));
+            }
+            ctx.lineTo(ew, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+    } else if(type.pattern==='stars'){
+        ctx.fillStyle='#fff4';
+        for(let a=0;a<5;a++){
+            const ang=(Math.PI*2/5)*a - Math.PI/2;
+            ctx.beginPath();
+            ctx.arc(Math.cos(ang)*ew*0.5, Math.sin(ang)*eh*0.45, 2.5, 0, Math.PI*2);
+            ctx.fill();
+        }
+    } else if(type.pattern==='bomb'){
+        // ☠ символ
+        ctx.font=`bold ${radius*1.1}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('💣',0,0);
+    } else if(type.pattern==='clover'){
+        ctx.font=`bold ${radius*1.1}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('🍀',0,0);
+    } else if(type.pattern==='cross'){
+        // Блискавка
+        ctx.font=`bold ${radius*1.2}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='#fff';
+        ctx.fillText('⚡',0,0);
+    }
+
+    // Блиск
+    if(!type.bomb && !type.heal && type.pattern!=='bomb' && type.pattern!=='clover' && type.pattern!=='cross'){
+        ctx.beginPath();
+        ctx.ellipse(-ew*0.25,-eh*0.35, ew*0.22, eh*0.18, -0.4, 0, Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.45)';
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+// ===== МАЛЮВАННЯ ГРАВЦЯ =====
+function drawPlayer(){
+    const {x,y,radius} = player;
+    // Тінь/ореол
+    ctx.shadowBlur=25;
+    ctx.shadowColor = 'rgba(255,160,80,0.7)';
+    ctx.beginPath();
+    ctx.arc(x,y,radius+4,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,200,100,0.2)';
+    ctx.fill();
+    ctx.shadowBlur=0;
+
+    // Корзина (головна форма)
+    const bw=radius*2.2, bh=radius*1.4;
+    // Ручка корзини
+    ctx.beginPath();
+    ctx.ellipse(x, y-radius*0.8, bw*0.38, radius*0.85, 0, Math.PI, Math.PI*2);
+    ctx.strokeStyle='#c9a052'; ctx.lineWidth=4; ctx.stroke();
+
+    // Тіло корзини
+    const cGrd = ctx.createLinearGradient(x,y-bh/2,x,y+bh/2);
+    cGrd.addColorStop(0,'#e8a84a');
+    cGrd.addColorStop(1,'#b5722a');
+    ctx.beginPath();
+    ctx.ellipse(x,y,bw/2,bh/2,0,0,Math.PI*2);
+    ctx.fillStyle=cGrd; ctx.fill();
+    ctx.strokeStyle='#8b5e1a'; ctx.lineWidth=2; ctx.stroke();
+
+    // Плетіння
+    ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=1.5;
+    for(let i=-2;i<=2;i++){
+        ctx.beginPath();
+        ctx.moveTo(x-bw/2+2, y+i*bh*0.22);
+        ctx.lineTo(x+bw/2-2, y+i*bh*0.22);
+        ctx.stroke();
+    }
+    for(let i=-3;i<=3;i++){
+        ctx.beginPath();
+        ctx.moveTo(x+i*bw*0.16, y-bh/2+2);
+        ctx.lineTo(x+i*bw*0.16, y+bh/2-2);
+        ctx.stroke();
+    }
+
+    // Зображення персонажа поверх
+    if(playerImage && playerImage.complete && playerImage.naturalWidth>0){
+        try{
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x,y-bh*0.4,radius*0.8,0,Math.PI*2);
+            ctx.clip();
+            ctx.drawImage(playerImage, x-radius*0.8, y-bh*0.4-radius*0.8, radius*1.6, radius*1.6);
+            ctx.restore();
+        } catch(e){}
+    }
+
+    // Комбо-ефект навколо корзини
+    if(combo>1){
+        ctx.save();
+        ctx.globalAlpha=0.6;
+        ctx.strokeStyle=`hsl(${(frameCounter*3)%360},100%,65%)`;
+        ctx.lineWidth=3;
+        ctx.beginPath();
+        ctx.arc(x,y,(radius+12)+Math.sin(frameCounter*0.1)*3,0,Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// ===== ФОНОВЕ ПОЛЕ =====
+function drawField(){
+    // Небо
+    const skyGrd = ctx.createLinearGradient(0,0,0,GH);
+    skyGrd.addColorStop(0,'#1e0a4a');
+    skyGrd.addColorStop(0.6,'#2d1b69');
+    skyGrd.addColorStop(1,'#4a2c0f');
+    ctx.fillStyle=skyGrd; ctx.fillRect(0,0,GW,GH);
+
+    // Місяць / сонечко
+    ctx.save();
+    ctx.shadowBlur=60; ctx.shadowColor='#ffd700aa';
+    ctx.beginPath(); ctx.arc(GW-80,80,38,0,Math.PI*2);
+    const moonGrd=ctx.createRadialGradient(GW-90,70,5,GW-80,80,38);
+    moonGrd.addColorStop(0,'#fffde7'); moonGrd.addColorStop(1,'#f9a825');
+    ctx.fillStyle=moonGrd; ctx.fill();
+    ctx.restore();
+
+    // Трава
+    const grassGrd=ctx.createLinearGradient(0,GH-80,0,GH);
+    grassGrd.addColorStop(0,'#2d5a1b'); grassGrd.addColorStop(1,'#1a3a0e');
+    ctx.fillStyle=grassGrd;
+    ctx.beginPath();
+    ctx.moveTo(0,GH-60);
+    for(let i=0;i<=GW;i+=8){
+        const h = 10+Math.sin(i*0.05+frameCounter*0.015)*6+Math.sin(i*0.12)*4;
+        ctx.lineTo(i, GH-60-h);
+    }
+    ctx.lineTo(GW,GH); ctx.lineTo(0,GH); ctx.closePath(); ctx.fill();
+
+    // Квіти на траві
+    const flowerColors=['#ff6b9d','#ffd700','#74b9ff','#fd79a8','#55efc4'];
+    for(let i=0;i<14;i++){
+        const fx=40+(i*73+17)%GW, fy=GH-55+Math.sin(i)*8;
+        ctx.fillStyle=flowerColors[i%flowerColors.length];
+        ctx.beginPath(); ctx.arc(fx,fy,5+Math.sin(frameCounter*0.02+i)*1,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#fff8';
+        ctx.beginPath(); ctx.arc(fx,fy,2,0,Math.PI*2); ctx.fill();
+        // Стеблинка
+        ctx.strokeStyle='#4caf50'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(fx,fy+5); ctx.lineTo(fx,fy+18); ctx.stroke();
+    }
+
+    // Зірки на фоні
+    ctx.fillStyle='rgba(255,255,220,0.4)';
+    for(let i=0;i<30;i++){
+        const sx=(i*157+83)%GW, sy=(i*97+31)%(GH*0.5);
+        const sa=0.3+0.5*Math.abs(Math.sin(frameCounter*0.01+i));
+        ctx.globalAlpha=sa;
+        ctx.beginPath(); ctx.arc(sx,sy,0.8+i%2,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // Декоративні кущі
+    for(let i=0;i<5;i++){
+        const bx=50+(i*GW/5+30), by=GH-58;
+        ctx.fillStyle='#1a4010cc';
+        ctx.beginPath();
+        ctx.arc(bx,by,20+i%3*5,0,Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(bx-16,by+8,15,0,Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(bx+16,by+8,15,0,Math.PI*2); ctx.fill();
+    }
+}
+
+// ===== ЕФЕКТИ ЧАСТИНОК =====
+function updateDrawParticles(){
+    for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];
+        p.x+=p.vx; p.y+=p.vy; p.vy+=0.15;
+        p.vx*=0.95; p.life-=p.decay;
+        if(p.life<=0){ particles.splice(i,1); continue; }
+        ctx.globalAlpha=p.life;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+        ctx.fillStyle=p.color; ctx.fill();
+    }
+    ctx.globalAlpha=1;
+}
+
+// ===== КУРСОР =====
+function drawCursor(){
+    if(!gameActive) return;
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(mouseX,cursorY||GH/2,10,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(mouseX-14,cursorY||GH/2); ctx.lineTo(mouseX+14,cursorY||GH/2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(mouseX,cursorY||GH/2-14); ctx.lineTo(mouseX,(cursorY||GH/2)+14); ctx.stroke();
+    ctx.restore();
+}
+
+// ===== HUD У CANVAS =====
+function drawCanvasHUD(){
+    // Шкала часу (рівень)
+    const level = Math.floor(frameCounter/600)+1;
+    ctx.font='bold 14px Baloo2,cursive'; ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText(`Рівень ${level}`, 12, 28);
+}
+
+// ===== ГОЛОВНИЙ ЦИКЛ =====
+function gameLoop(){
+    if(!gameActive) return;
+    frameCounter++;
+    updatePlayer();
+
+    // Спавн яєць
+    if(frameCounter % Math.max(18, eggSpawnDelay) === 0) {
+        spawnEgg();
+        if(Math.random()<0.25 && frameCounter>120) spawnEgg();
+    }
+
+    // Складність
+    if(frameCounter % 450===0 && eggSpawnDelay>20) eggSpawnDelay = Math.max(20,eggSpawnDelay-2);
+    if(frameCounter % 700===0 && baseEggSpeed<4.0) baseEggSpeed += 0.15;
+
+    // Рух яєць + вобблінг
+    for(let e of eggs){
+        e.y += e.speed;
+        e.wobble += 0.04;
+        e.x += Math.sin(e.wobble)*e.wobbleAmp*0.5;
+        e.rot += e.rotSpeed;
+    }
+
+    // Combo таймер
+    if(comboTimer>0){ comboTimer--; if(comboTimer===0) combo=1; updateHUD(); }
+
+    // Перевірка збору
+    const toRemove=new Set();
+    for(let i=0;i<eggs.length;i++){
+        const e=eggs[i];
+        const dist = doubleCollectFlag ? player.radius+e.radius+16 : player.radius+e.radius;
+        if(Math.hypot(player.x-e.x, player.y-e.y) < dist){
+            toRemove.add(i);
+            // Ефект
+            if(e.type.bomb){
+                score = Math.max(0, score+e.value);
+                spawnParticles(e.x,e.y,'#e17055',12);
+                spawnFloatText(e.x,e.y-20,`💣 ${e.value}`,'#ff6b6b');
+                combo=1; comboTimer=0;
+                // Тряска
+                canvas.style.transform='translate(4px,0)';
+                setTimeout(()=>{canvas.style.transform='translate(-4px,0)'},60);
+                setTimeout(()=>{canvas.style.transform=''},120);
+            } else if(e.type.heal){
+                health = Math.min(health+1,6);
+                spawnStarBurst(e.x,e.y);
+                spawnFloatText(e.x,e.y-20,'❤️ +1','#55efc4');
+            } else {
+                const pts = e.value * (e.type.combo||combo>1 ? combo : 1);
+                score += pts;
+                combo = Math.min(combo+1,8);
+                comboTimer=90;
+                spawnParticles(e.x,e.y, e.type.glow?'#FFD700':e.type.color[0], e.type.glow?16:8);
+                if(e.type.glow||combo>3) spawnStarBurst(e.x,e.y);
+                const label = pts>3 ? `+${pts} 🔥` : `+${pts}`;
+                const col = e.type.glow?'#FFD700': combo>3?'#fd79a8':'#fff';
+                spawnFloatText(e.x,e.y-20,label,col);
+            }
+            updateHUD();
+        }
+    }
+
+    // Падіння яєць
+    for(let i=eggs.length-1;i>=0;i--){
+        if(eggs[i].y - eggs[i].radius > GH+20 && !toRemove.has(i)){
+            if(!eggs[i].type.bomb && !eggs[i].type.heal){
+                health--;
+                combo=1; comboTimer=0;
+                updateHUD();
+                if(health<=0){ gameOver(); return; }
+            }
+            toRemove.add(i);
+        }
+    }
+    eggs = eggs.filter((_,i)=>!toRemove.has(i));
+
+    // Малювання
+    drawField();
+    for(let e of eggs) drawEgg(e);
+    drawPlayer();
+    updateDrawParticles();
+    drawCanvasHUD();
+    drawCursor();
+
+    if(health<=0){ gameOver(); return; }
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+// ===== GAME OVER =====
+function gameOver(){
+    gameActive=false;
+    if(animationId) cancelAnimationFrame(animationId);
+    if(score>highscore){ highscore=score; localStorage.setItem('esc_hs',highscore); }
+    document.getElementById('overlayTitle').textContent = score>=highscore ? '🏆 НОВИЙ РЕКОРД!' : '🎉 ГРА ЗАКІНЧЕНА!';
+    document.getElementById('overlayScore').textContent = score;
+    document.getElementById('highscoreLabel').textContent = `🏆 Рекорд: ${highscore}`;
+    document.getElementById('overlay').style.display='flex';
+}
+
+// ===== КОНТРОЛІ =====
+function initControls(){
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+
+    canvas.addEventListener('mousemove', e=>{
+        if(!gameActive) return;
+        const r=canvas.getBoundingClientRect();
+        mouseX = (e.clientX-r.left)*(canvas.width/r.width);
+        cursorY = (e.clientY-r.top)*(canvas.height/r.height);
+        targetX=mouseX;
+    });
+    canvas.addEventListener('touchmove', e=>{
+        e.preventDefault();
+        if(!gameActive) return;
+        const r=canvas.getBoundingClientRect();
+        mouseX=(e.touches[0].clientX-r.left)*(canvas.width/r.width);
+        cursorY=(e.touches[0].clientY-r.top)*(canvas.height/r.height);
+        targetX=mouseX;
+    },{passive:false});
+    canvas.addEventListener('touchstart', e=>{
+        e.preventDefault();
+        if(!gameActive) return;
+        const r=canvas.getBoundingClientRect();
+        mouseX=(e.touches[0].clientX-r.left)*(canvas.width/r.width);
+        cursorY=(e.touches[0].clientY-r.top)*(canvas.height/r.height);
+        targetX=mouseX;
+    },{passive:false});
+
+    window.addEventListener('keydown', e=>{
+        const k=e.key.toLowerCase();
+        if(k==='a'||k==='arrowleft') keys.a=true;
+        if(k==='d'||k==='arrowright') keys.d=true;
+    });
+    window.addEventListener('keyup', e=>{
+        const k=e.key.toLowerCase();
+        if(k==='a'||k==='arrowleft') keys.a=false;
+        if(k==='d'||k==='arrowright') keys.d=false;
+    });
+
+    window.addEventListener('resize', ()=>{ resizeBg(); resizeCanvas(); });
+}
+
+// ===== ІНІЦІАЛІЗАЦІЯ =====
+window.addEventListener('load', async ()=>{
+    initBg();
+    await initCharactersUI();
+    initControls();
+
+    document.getElementById('startGameBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', ()=>{
+        if(gameActive){ gameActive=false; if(animationId) cancelAnimationFrame(animationId); }
+        restartToMenu();
+    });
+    document.getElementById('playAgainBtn').addEventListener('click', restartSame);
+    document.getElementById('menuBtn').addEventListener('click', restartToMenu);
+});
+
+})();
 </script>
 </body>
 </html>
